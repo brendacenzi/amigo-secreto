@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Amigo Secreto – Sorteio Privado</title>
+<style>
+    body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
+    textarea, input { width: 100%; margin-top: 10px; padding: 8px; }
+    button { padding: 10px 20px; margin-top: 15px; cursor: pointer; }
+    .link-box { background:#f4f4f4; padding:10px; margin-top:10px; border-radius:5px;}
+</style>
+</head>
+<body>
+
+<h1>Sorteador de Amigo Secreto</h1>
+<p>Digite os nomes dos participantes (um por linha):</p>
+
+<textarea id="lista" rows="8"></textarea>
+
+<h3>Regras opcionais</h3>
+<p>Formato: Nome1 -> Nome2 (um por linha)</p>
+<textarea id="regras" rows="4" placeholder="Ex: João -> Maria"></textarea>
+
+<button onclick="sortear()">Gerar Sorteio</button>
+
+<h2>Links individuais:</h2>
+<div id="resultado"></div>
+
+<script>
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function sortear() {
+    const nomes = document.getElementById("lista").value.trim().split("\n").map(n=>n.trim()).filter(n=>n);
+    const regrasTexto = document.getElementById("regras").value.trim().split("\n").filter(r=>r);
+
+    if (nomes.length < 2) {
+        alert("Digite pelo menos 2 participantes.");
+        return;
+    }
+
+    // Processar regras
+    let regras = {};
+    for (const r of regrasTexto) {
+        const [a, b] = r.split("->").map(s=>s.trim());
+        if (!nomes.includes(a) || !nomes.includes(b)) {
+            alert(`Regra inválida: ${r}`);
+            return;
+        }
+        regras[a] = b;
+    }
+
+    // Tentativas de sorteio
+    let tentativas = 5000;
+    let pares = null;
+
+    while (tentativas--) {
+        let sorteio = [...nomes];
+        shuffle(sorteio);
+
+        let valido = true;
+        let resultado = {};
+
+        for (let i = 0; i < nomes.length; i++) {
+            const pessoa = nomes[i];
+            const amigo = sorteio[i];
+
+            if (pessoa === amigo) { valido = false; break; }
+            if (regras[pessoa] && regras[pessoa] !== amigo) { valido = false; break; }
+
+            resultado[pessoa] = amigo;
+        }
+
+        if (valido) { pares = resultado; break; }
+    }
+
+    if (!pares) {
+        alert("Não foi possível gerar um sorteio válido com essas regras.");
+        return;
+    }
+
+    // Geração dos links
+    const container = document.getElementById("resultado");
+    container.innerHTML = "";
+
+    for (const nome of nomes) {
+        const token = btoa(JSON.stringify({ nome, amigo: pares[nome] }));
+        const link = `${location.href.split('#')[0]}#${token}`;
+
+        const div = document.createElement("div");
+        div.className = "link-box";
+        div.innerHTML = `<strong>${nome}:</strong><br><a href="${link}" target="_blank">${link}</a>`;
+        container.appendChild(div);
+    }
+}
+
+// Se a página foi acessada com hash, mostrar o resultado individual
+window.onload = function() {
+    if (location.hash.length > 1) {
+        document.body.innerHTML = "";
+        const data = JSON.parse(atob(location.hash.substring(1)));
+
+        document.body.innerHTML = `
+            <h1>Seu Amigo Secreto</h1>
+            <p><strong>${data.nome}</strong>, você tirou:</p>
+            <h2 style="font-size:32px;">🎁 ${data.amigo}</h2>
+        `;
+    }
+};
+</script>
+
+</body>
+</html>
