@@ -4,10 +4,54 @@
 <meta charset="UTF-8">
 <title>Amigo Secreto – Sorteio Privado</title>
 <style>
-    body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
-    textarea, input { width: 100%; margin-top: 10px; padding: 8px; }
-    button { padding: 10px 20px; margin-top: 15px; cursor: pointer; }
-    .link-box { background:#f4f4f4; padding:10px; margin-top:10px; border-radius:5px;}
+    body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: white;
+}
+
+.card {
+    background: white;
+    color: #444;
+    padding: 40px;
+    border-radius: 18px;
+    width: 350px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    animation: pop 0.5s ease-out;
+}
+
+@keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.card h1 {
+    margin: 0 0 10px;
+    font-size: 26px;
+}
+
+.card p {
+    font-size: 18px;
+}
+
+.amigo {
+    font-size: 36px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #6a11cb;
+}
+
+.logo {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
 </style>
 </head>
 <body>
