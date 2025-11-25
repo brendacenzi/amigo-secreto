@@ -145,16 +145,21 @@ function sortear() {
 // Se a página foi acessada com hash, mostrar o resultado individual
 window.onload = function() {
     if (location.hash.length > 1) {
-        document.body.innerHTML = "";
+        document.body.innerHTML = ""; 
+        
         const data = JSON.parse(atob(location.hash.substring(1)));
 
         document.body.innerHTML = `
-            <h1>Seu Amigo Secreto</h1>
-            <p><strong>${data.nome}</strong>, você tirou:</p>
-            <h2 style="font-size:32px;">🎁 ${data.amigo}</h2>
+            <div class="card">
+                <div class="logo">🎁</div>
+                <h1>Olá, ${data.nome}!</h1>
+                <p>Seu amigo secreto é:</p>
+                <div class="amigo">${data.amigo}</div>
+            </div>
         `;
     }
 };
+
 </script>
 
 </body>
