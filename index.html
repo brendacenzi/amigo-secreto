@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amigo Secreto - Natalino</title>
+<title>Amigo Secreto - Tema Natalino</title>
 
 <style>
 /* ------------------------------
@@ -116,4 +116,120 @@ body.reveal {
 /* RESPONSO */
 @media (max-width: 480px) {
     .card { padding: 30px 20px; }
-    .logo { font-s
+    .logo { font-size: 50px; }
+    .amigo { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="main-page">
+    <h1>🎄 Sorteador de Amigo Secreto 🎅</h1>
+
+    <p><strong>Digite os participantes (um por linha):</strong></p>
+    <textarea id="lista" rows="8" placeholder="Ex: Ana&#10;Bruno&#10;Carlos"></textarea>
+
+    <h3>Regras opcionais</h3>
+    <p>Formato: Nome1 -> Nome2 (um por linha)</p>
+    <textarea id="regras" rows="4" placeholder="Ex: João -> Maria"></textarea>
+
+    <button onclick="sortear()">Gerar Sorteio</button>
+
+    <h2>Links individuais:</h2>
+    <div id="resultado"></div>
+</div>
+
+<script>
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function sortear() {
+    const nomes = document.getElementById("lista").value
+        .trim().split("\n").map(n => n.trim()).filter(n => n);
+
+    const regrasTexto = document.getElementById("regras").value
+        .trim().split("\n").filter(r => r);
+
+    if (nomes.length < 2) {
+        alert("Digite pelo menos 2 participantes.");
+        return;
+    }
+
+    let regras = {};
+    for (const r of regrasTexto) {
+        const [a, b] = r.split("->").map(s => s.trim());
+        if (!nomes.includes(a) || !nomes.includes(b)) {
+            alert(`Regra inválida:\n${r}`);
+            return;
+        }
+        regras[a] = b;
+    }
+
+    let tentativas = 5000;
+    let pares = null;
+
+    while (tentativas--) {
+        let sorteio = [...nomes];
+        shuffle(sorteio);
+
+        let valido = true;
+        let resultado = {};
+
+        for (let i = 0; i < nomes.length; i++) {
+            const pessoa = nomes[i];
+            const amigo = sorteio[i];
+
+            if (pessoa === amigo) { valido = false; break; }
+            if (regras[pessoa] && regras[pessoa] !== amigo) { valido = false; break; }
+
+            resultado[pessoa] = amigo;
+        }
+
+        if (valido) { pares = resultado; break; }
+    }
+
+    if (!pares) {
+        alert("Não foi possível gerar um sorteio válido com essas regras.");
+        return;
+    }
+
+    const container = document.getElementById("resultado");
+    container.innerHTML = "";
+
+    for (const nome of nomes) {
+        const token = btoa(JSON.stringify({ nome, amigo: pares[nome] }));
+        const link = `${location.href.split('#')[0]}#${token}`;
+
+        const div = document.createElement("div");
+        div.className = "link-box";
+        div.innerHTML = `<strong>${nome}:</strong><br><a href="${link}" target="_blank">${link}</a>`;
+        container.appendChild(div);
+    }
+}
+
+/* ------------------------------
+   TELA INDIVIDUAL DO PARTICIPANTE
+--------------------------------*/
+window.onload = function() {
+    if (location.hash.length > 1) {
+        const data = JSON.parse(atob(location.hash.substring(1)));
+
+        document.body.classList.add("reveal");
+        document.body.innerHTML = `
+            <div class="card">
+                <div class="logo">🎁</div>
+                <h1>Olá, ${data.nome}!</h1>
+                <p>Ho ho ho! Chegou a hora de descobrir seu Amigo Secreto...</p>
+                <p>Seu sorteado foi:</p>
+                <div class="amigo">🎄 ${data.amigo} 🎄</div>
+            </div>
+        `;
+    }
+};
+</script>
+</body>
+</html>
