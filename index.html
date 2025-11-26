@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amigo Secreto - Natalino</title>
-
+<title>Amigo Secreto - Natal</title>
 <style>
 /* ------------------------------
    ESTILO BÁSICO (TELA DE SORTEIO)
@@ -62,13 +61,13 @@ a {
     word-break: break-all;
 }
 
-/* -------------------------------------------------
-   TELA INDIVIDUAL DO PARTICIPANTE (NATAL + RESPONSIVO)
----------------------------------------------------*/
+/* ------------------------------
+   TELA INDIVIDUAL (NATAL REPETIDO)
+--------------------------------*/
 body.reveal {
     background: url("https://img.freepik.com/vetores-gratis/design-plano-de-padrao-de-natal-com-presentes-e-visco_23-2150848749.jpg?w=740")
                 repeat;
-    background-size: 300px; /* ajuste o tamanho ao gosto */
+    background-size: 300px;
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -76,11 +75,8 @@ body.reveal {
     padding: 0;
 }
 
-
-
-
 .card {
-    background: rgba(255, 255, 255, 0.90);
+    background: rgba(255, 255, 255, 0.95);
     padding: 40px 30px;
     width: 90%;
     max-width: 420px;
@@ -118,7 +114,6 @@ body.reveal {
     margin-top: 15px;
 }
 
-/* RESPONSO */
 @media (max-width: 480px) {
     .card { padding: 30px 20px; }
     .logo { font-size: 50px; }
@@ -134,9 +129,13 @@ body.reveal {
     <p><strong>Digite os participantes (um por linha):</strong></p>
     <textarea id="lista" rows="8" placeholder="Ex: Ana&#10;Bruno&#10;Carlos"></textarea>
 
-    <h3>Regras opcionais</h3>
+    <h3>Regras de força (quem deve tirar quem)</h3>
     <p>Formato: Nome1 -> Nome2 (um por linha)</p>
-    <textarea id="regras" rows="4" placeholder="Ex: João -> Maria"></textarea>
+    <textarea id="forca" rows="4" placeholder="Ex: João -> Maria"></textarea>
+
+    <h3>Regras de exclusão (quem NÃO pode tirar quem)</h3>
+    <p>Formato: Nome1 !-> Nome2 (um por linha)</p>
+    <textarea id="exclusao" rows="4" placeholder="Ex: Ana !-> Bruno"></textarea>
 
     <button onclick="sortear()">Gerar Sorteio</button>
 
@@ -156,57 +155,74 @@ function sortear() {
     const nomes = document.getElementById("lista").value
         .trim().split("\n").map(n => n.trim()).filter(n => n);
 
-    const regrasTexto = document.getElementById("regras").value
-        .trim().split("\n").filter(r => r);
-
-    if (nomes.length < 2) {
+    if(nomes.length < 2){
         alert("Digite pelo menos 2 participantes.");
         return;
     }
 
-    let regras = {};
-    for (const r of regrasTexto) {
-        const [a, b] = r.split("->").map(s => s.trim());
-        if (!nomes.includes(a) || !nomes.includes(b)) {
-            alert(`Regra inválida:\n${r}`);
+    // Processa regras de força
+    const forcaTexto = document.getElementById("forca").value.trim().split("\n").filter(r=>r);
+    let regrasForca = {};
+    for(const r of forcaTexto){
+        const [a,b] = r.split("->").map(s=>s.trim());
+        if(!nomes.includes(a) || !nomes.includes(b)){
+            alert(`Regra de força inválida: ${r}`);
             return;
         }
-        regras[a] = b;
+        regrasForca[a] = b;
     }
 
-    let tentativas = 5000;
+    // Processa regras de exclusão
+    const exclTexto = document.getElementById("exclusao").value.trim().split("\n").filter(r=>r);
+    let regrasExcl = {};
+    for(const r of exclTexto){
+        const [a,b] = r.split("!->").map(s=>s.trim());
+        if(!nomes.includes(a) || !nomes.includes(b)){
+            alert(`Regra de exclusão inválida: ${r}`);
+            return;
+        }
+        if(!regrasExcl[a]) regrasExcl[a] = [];
+        regrasExcl[a].push(b);
+    }
+
+    let tentativas = 10000;
     let pares = null;
 
-    while (tentativas--) {
+    while(tentativas--){
         let sorteio = [...nomes];
         shuffle(sorteio);
 
         let valido = true;
         let resultado = {};
 
-        for (let i = 0; i < nomes.length; i++) {
+        for(let i=0;i<nomes.length;i++){
             const pessoa = nomes[i];
             const amigo = sorteio[i];
 
-            if (pessoa === amigo) { valido = false; break; }
-            if (regras[pessoa] && regras[pessoa] !== amigo) { valido = false; break; }
+            if(pessoa === amigo){ valido = false; break; }
+            if(regrasForca[pessoa] && regrasForca[pessoa] !== amigo){ valido = false; break; }
+            if(regrasExcl[pessoa] && regrasExcl[pessoa].includes(amigo)){ valido = false; break; }
 
             resultado[pessoa] = amigo;
         }
 
-        if (valido) { pares = resultado; break; }
+        if(valido){
+            pares = resultado;
+            break;
+        }
     }
 
-    if (!pares) {
+    if(!pares){
         alert("Não foi possível gerar um sorteio válido com essas regras.");
         return;
     }
 
+    // Geração dos links individuais
     const container = document.getElementById("resultado");
     container.innerHTML = "";
 
-    for (const nome of nomes) {
-        const token = btoa(JSON.stringify({ nome, amigo: pares[nome] }));
+    for(const nome of nomes){
+        const token = btoa(JSON.stringify({nome, amigo: pares[nome]}));
         const link = `${location.href.split('#')[0]}#${token}`;
 
         const div = document.createElement("div");
@@ -216,11 +232,9 @@ function sortear() {
     }
 }
 
-/* ------------------------------
-   TELA INDIVIDUAL DO PARTICIPANTE
---------------------------------*/
-window.onload = function() {
-    if (location.hash.length > 1) {
+// Tela individual do participante
+window.onload = function(){
+    if(location.hash.length > 1){
         const data = JSON.parse(atob(location.hash.substring(1)));
 
         document.body.classList.add("reveal");
